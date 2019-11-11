@@ -11,11 +11,14 @@
 			global $_W;
 			$this->uniacid = $_W['uniaccount']['uniacid'];
 			$sysset = pdo_getcolumn('rhinfo_service_config',['uniacid'=>$this->uniacid],'sysset');
+			
 			if(!empty($sysset)){
 				$sysset = iunserializer($sysset);
+				$_W['sys'] =  $sysset;
 				$_W['delivery']['sys'] = $sysset['delivery'];
 			}else{
 				$_W['delivery']['sys'] = '';
 			}
+			
 		}
 	}

@@ -101,6 +101,7 @@
 		}
 		//服务完成
 		public function finish(){
+			global $_W;
 			$oid = getvar('id');
 			$m_Order = new \model\Order($this->uniacid);
 			$order = $m_Order->getDeliveryerOrder($this->uid,$oid);
@@ -111,10 +112,123 @@
 			if(empty($order)) jsonReturn(1,'订单不存在');
 			if($order['status'] == 5) jsonReturn(1,'系统已完成,不能确认服务完成');
 			if($order['status'] == 6) jsonReturn(1,'系统已取消,不能确认服务完成');
-			// order_deliveryer_update_status($id, 'delivery_success', array('deliveryer_id' => $_deliveryer['id']));
+			die;
+			// 修改订单
+			$istimeout = 0;
+			if(($_W['sys']['takeout']['order']['timeout_limit']>0) && (TIMESTAMP - $order['paytime'] > $_W['sys']['takeout']['order']['timeout_limit'] * 60)){
+				$is_timeout = 1;
+			}
+			$update = [
+				'is_timeout' => $is_timeout,
+				'status'	 =>	5,
+				'delivery_status'=>5,
+				'endtime' => TIMESTAMP,
+				'delivery_success_time' => TIMESTAMP,
+				'delivery_success_location_x' => '',
+				'delivery_success_location_y' => '',
+				'is_remind' => 0,
+				'deliveryer_id'=>	$this->uid,
+			];
+			pdo_update('rhinfo_service_order',$update,['uniacid'=>$this->uniacid,'id'=>$order['id']]);
+			pdo_update('rhinfo_service_order_stat',['status'=>5],'uniacid'=>$this->uniacid,'oid'=>$order['id']);
+			//
+			if($order['delivery_type'] == 2){
+				//平台配送费
+				if (0 < $order['plateform_deliveryer_fee']) {
+					// 					
+					$m_deliveryer->changeDeliveryerAccount($order['plateform_deliveryer_fee'],$order['deliveryer_id'],$order['id']);
+				}
+				
+				//用户支付方式为货到付款时
+				if($order['pay_type'] == 'delivery'){
+					// 
+					$remark = "{$order['id']} 属于货到支付单,您线下收取客户{$order['final_fee']}元,平台从您账户扣除该费用";
+					//从技师余额扣款
+					$m_deliveryer->changeDeliveryerAccount($order['final_fee'],$order['deliveryer_id'],$order['id'],3,'dec',$remark);
+				}
+				
+			}
+			//
+			if($order['is_pay'] == 1){
+				$m_Store = new \model\Store($this->uniacid);
+				if(in_array($order['pay_type'], array('wechat', 'alipay', 'credit', 'peerpay', 'qianfan', 'majia', 'eleme', 'meituan')) || ($order['delivery_type'] == 2 && $order['pay_type'] == 'delivery')) {
+					//
+					$m_Store->changeStoreAccount($order['store_final_fee'],$order['sid'],$order['id']);
+					
+				} else {
+					$remark = "编号为{$order['id']}的订单属于线下支付,平台需要扣除{$order['plateform_serve_fee']}元服务费";
+					// 
+					$m_Store->changeStoreAccount($order['store_final_fee'],$order['sid'],$order['id'],1,"dec",$remark);
+				}
+			}
+			//赠送积分 order.mode.php line 2422(暂时不做)
 			
-			// order_status_update($order['id'], 'end', $extra);
+			//
+			//赠送余额
 			
+			//
+			//赠送优惠券
 			
+			//
+			//赠送红包
+			
+			//
+			
+			//更新用户信息
+			$member_mall = pdo_get('rhinfo_service_members',['uniacid'=>$this->uniacid,'uid'=>$order['uid']]);
+			if(!empty($member_mall)){
+				$member_update = [
+					'success_num'	=>	$member_mall['success_num'] + 1,
+					'success_price'	=>	round($member_mall['success_price']+ $order['final_fee'],2),
+					'success_last_time' => TIMESTAMP,
+				];
+				if(!$member_mall['success_first_time']) {
+					$member_update['success_first_time'] = TIMESTAMP;
+				}
+				pdo_update('rhinfo_service_members',$member_update,['id'=>$member_mall['id']]);
+				//商户下用户信息
+				$member_store =  pdo_get('rhinfo_service_store_members', array('uniacid' => $_W['uniacid'], 'sid' => $order['sid'], 'uid' => $order['uid']));
+				
+				if(empty($member_store)){
+					//新增商户用户
+					$insert = [
+						'uniacid'	=>	$this->uniacid,
+						'sid'		=>	$order['sid'],
+						'uid'		=>	$order['uid'],
+						'openid'	=>	$order['openid'],
+						'success_first_time' => TIMESTAMP,
+						'success_last_time' => TIMESTAMP,
+						'success_num' => 1,
+						'success_price' => $order['final_fee'],
+					];
+					
+					pdo_insert('rhinfo_service_store_members', $insert);
+				}else{
+					//更新商户用户信息
+					$sore_update = [
+						'success_num' => $member_store['success_num'] + 1,
+						'success_price' => round($member_store['success_price'] + $order['final_fee'], 2),
+						'success_last_time' => TIMESTAMP,
+					];
+					pdo_update('rhinfo_service_store_members',$member_update,['id'=>$member_store['id']]);
+				}
+				
+			}
+			
+			// 写入订单状态日志
+			
+			$status_log = [
+				'uniacid'	=>	$this->uniacid,
+				'oid'		=>	$order['id'],
+				'status'	=>	5,
+				'type'		=>	'end',
+				'role'		=>	'deliveryer',
+				'role_cn'	=>	'服务人员:'.$deliveryer['title'],
+				'title'		=>	'订单已完成',
+				'note'		=>	'任何意见和吐槽,都欢迎联系我们',
+				'addtime' 	=> 	TIMESTAMP,
+			];
+			pdo_insert('rhinfo_service_order_status_log',$status_log);
+			jsonReturn(0,'确认服务成功');
 		}
 	}
