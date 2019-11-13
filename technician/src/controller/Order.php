@@ -14,11 +14,13 @@
 		//技师订单
 		public function show(){
 			$type = getvar('type');
-			$ouput['type']= deliveryer_order_types();
+			$output['type']= deliveryer_order_types();
 			$type = empty($type)?3:$type;
 			$m_Order = new \model\Order($this->uniacid);
 			$orders = $m_Order->deliveryerOrder($this->uid,$type);
-			jsonReturn(0,'',$orders);
+			$output['orders'] = $orders['orders'];
+			$output['stores'] = $orders['stores'];
+			jsonReturn(0,'',$output);
 			
 		}
 		//抢单
@@ -34,7 +36,7 @@
 			
 			if(empty($order)) jsonReturn(1,'订单不存在或已删除');
 			if($order['status'] == 5) jsonReturn(1,'系统已完成,不能抢单');
-			if($order['status'] == 3) jsonReturn(1,'系统已取消,不能抢单');
+			if($order['status'] == 6) jsonReturn(1,'系统已取消,不能抢单');
 			if($order['deliveryer_id'] > 0) jsonReturn(1,'来迟了,该订单已被别人接单');
 			//修改订单状态
 			$update = [
@@ -112,7 +114,7 @@
 			if(empty($order)) jsonReturn(1,'订单不存在');
 			if($order['status'] == 5) jsonReturn(1,'系统已完成,不能确认服务完成');
 			if($order['status'] == 6) jsonReturn(1,'系统已取消,不能确认服务完成');
-			die;
+			
 			// 修改订单
 			$istimeout = 0;
 			if(($_W['sys']['takeout']['order']['timeout_limit']>0) && (TIMESTAMP - $order['paytime'] > $_W['sys']['takeout']['order']['timeout_limit'] * 60)){
@@ -130,7 +132,7 @@
 				'deliveryer_id'=>	$this->uid,
 			];
 			pdo_update('rhinfo_service_order',$update,['uniacid'=>$this->uniacid,'id'=>$order['id']]);
-			pdo_update('rhinfo_service_order_stat',['status'=>5],'uniacid'=>$this->uniacid,'oid'=>$order['id']);
+			pdo_update('rhinfo_service_order_stat',['status'=>5],['uniacid'=>$this->uniacid,'oid'=>$order['id']]);
 			//
 			if($order['delivery_type'] == 2){
 				//平台配送费

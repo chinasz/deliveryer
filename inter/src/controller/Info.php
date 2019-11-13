@@ -27,11 +27,14 @@
 		//用户订单
 		public function order(){
 			global $_W,$_GPC;
+			$order_type = order_status();
+			$type = getvar('type');
+			$type = empty($type)?0:intval($type);
 			$m_Order = new \model\Order($this->uniacid);
 			
-			$order = $m_Order->getorder($this->uid);
+			$order = $m_Order->getorder($this->uid,$type);
 			
-			jsonReturn(0,'',$order);
+			jsonReturn(0,'',['orders'=>$order,'type'=>$order_type]);
 		}
 		
 		//用户收货地址列表

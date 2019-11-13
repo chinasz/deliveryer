@@ -9,13 +9,12 @@
         //加入购物车
         public function addcart(){
             global $_W,$_GPC;
-
+			
             $goods = getvar('goods');
             $sid = getvar('sid');
 			$m_Store = new \model\Store($this->uniacid);
             if(empty($goods) && strrpos('|',$goods)<0 ) jsonReturn(1,'参数错误');
             if(strrpos($goods,',')) $goods = explode(',',$goods);
-			
             if(empty($sid)) jsonReturn(1,'参数错误');
 			$store = $m_Store->storeInfo($sid);
 			if(empty($store)) jsonReturn(1,'店铺不存在或已被停用');
@@ -23,11 +22,12 @@
             $m_Cart = new \model\Cart($this->uniacid);
             //验证商品
             $data = [];
+			$original_data = '';
             if(is_array($goods)){
-
                 $total_box_price = 0;
                 $total_price = 0;
                 $total = 0;
+				//
                 foreach($goods as $k=>$good){
                     //商品id,规格id,商品数量
                     list($id,$option,$num) = explode('|',$good);
@@ -88,6 +88,7 @@
                     $total += $num;
                     $total_price += $price;
                     $total_box_price += $box_price;
+					$original_data .= $good.',';
                 }
             }else{
 
@@ -150,6 +151,7 @@
                 $total_price = $price;
                 $total_box_price = $box_price;
                 $data = [$data];
+				$original_data = $goods;
             }
             if(empty($data)) jsonReturn(1,'参数错误');
 
@@ -163,7 +165,7 @@
                 'data'      =>  iserializer([$data]),
                 'addtime'   =>  TIMESTAMP,
                 'box_price' =>  $total_box_price,
-                'original_data'=>iserializer([$data])
+                'original_data'=>$original_data
             ];
             
             $cart = $m_Cart->showMemberCart($this->uid,$sid);
@@ -219,6 +221,7 @@
 			$output['coupons_num'] = count($coupons);
 			//output店铺信息
 			$output['store'] = [
+				'store_name'	=>	$store['title'],
 				'delivery_type'	=>	$store['delivery_type'],
 				'delivery_mode'	=>	$store['delivery_mode'] == 1?'商家服务':'平台服务',
 			];

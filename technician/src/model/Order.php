@@ -26,7 +26,7 @@
 			$delivery_type = $_W['deliveryer']['deliveryer_type'];
 			$where = "where uniacid = :uniacid";
 			$param = [
-				'uniacid'	=>	$this->uniacid,
+				':uniacid'	=>	$this->uniacid,
 			];
 			$store_cn = implode(',', $_W['deliveryer']['deliveryer_store']);
 			if($type == 3){
@@ -46,15 +46,18 @@
 					
 				}
 			}else{
+				$where .= " and deliveryer_id = :deliveryer";
+				$param[':deliveryer'] = $deliveryer;
 				if($type == 7){
 					$where .= ' and (delivery_status = 7 or delivery_status = 8)';
 				}else{
 					
-					$where = ' and delivery_status = :status';
+					$where .= ' and delivery_status = :status';
 					$param[':status'] = $type;
 				}
 			}
 			$sql = "select id,order_plateform,serial_sn, addtime, is_pay, pay_type,order_type, status, username, mobile, address,distance, delivery_status,deliveryer_id,plateform_deliveryer_fee, delivery_type, delivery_fee, delivery_day, delivery_time,sid, num, final_fee,data,quotesta,note_images from ".tablename($this->tableName).$where;
+
 			$orders = pdo_fetchall($sql,$param);
 			$stores  = [];
 			if(!empty($orders)){

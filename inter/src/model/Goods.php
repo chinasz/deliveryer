@@ -36,7 +36,7 @@
 						->innerjoin('rhinfo_service_goods_category','c')
 						->on(['g.cid'=>'c.id'])
 						->select(['distinct g.cid','c.title'])
-						->where(['c.status'=>1,'c.uniacid'=>$this->uniacid])
+						->where(['c.status'=>1,'c.uniacid'=>$this->uniacid,'c.sid'=>$sid])
 						->getall();
 			return 	$category;
 		}

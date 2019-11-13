@@ -15,6 +15,7 @@
 			$address_id = intval(getvar('aid'));
 			$day = intval(getvar('day'));
 			$time = intval(getvar('time'));
+			$m_Goods = new \model\Goods($this->uniacid);
 			$m_Store = new \model\Store($this->uniacid);
 			$m_Cart = new \model\Cart($this->uniacid);
 			$m_Address = new \model\Address($this->uniacid);
@@ -32,7 +33,6 @@
 			//用户购物车
 			$cart = $m_Cart->showMemberCart($this->uid,$sid);
 			if(empty($cart)) jsonReturn(1,'商品为空');
-			
 			//服务时间
 			$delivery_time = $m_Store->storeDeliveryTimes($sid);
 			
@@ -175,7 +175,7 @@
 				}
 
 			}
-			//未知 	order_insert_status_log($order_id, 'place_order');
+			//状态日志 	order_insert_status_log($order_id, 'place_order');
 			$status_log1 = [
 				'uniacid'	=>	$this->uniacid,
 				'oid'		=>	$order_id,
@@ -197,8 +197,49 @@
 			];
 			pdo_insert('rhinfo_service_order_status_log', $status_log2);
 			//order_update_goods_info($order_id, $sid);
-			//pass
 			
+			$goods = explode(',',$cart['original_data']);
+			foreach($goods as $good){
+				if(empty($good)) continue;
+				list($id,$option,$num) = explode('|',$good);
+				$info = $m_Goods->goodDetail($id,['g.*','c.id as cid','c.title as cname'],['s.id'=>$sid]);
+				if(empty($info)) continue;
+				$sta = [
+					'oid'	=>	0,
+					'uniacid'=>$this->uniacid,
+					'sid'	=>	$sid,
+					'uid'	=>	$this->uid,
+					'goods_id'=>$info['id'],
+					'goods_cid'=>$info['cid'],
+					'option_id'=>0,
+					'goods_category_title'=>$info['cname'],
+					'goods_title'=>	$info['title'],
+					'goods_number'=>$info['number'],
+					'goods_num'=>$num,
+					'goods_discount_num'=>0,
+					'goods_unit_price'=>$info['price'],
+					'goods_price'=>$info['price'] * $num,
+					'goods_original_price'=>$info['price'] * $num,
+					'bargain_id'=>0,
+					'total_update_status'=>$info['total_update_type'] == 2 ? 0 : 1,
+					'print_label'=>	$info['print_label'],
+					'addtime'	=>	TIMESTAMP,
+					'stat_year'	=>	date('Y'),
+					'stat_month'=>	date('Ym'),
+					'stat_day'	=>	date('Ymd'),
+					'stat_week'	=>	date('YW')
+				];
+				if(!empty($option)){
+					if(!empty($info['options'][$option])){
+						$sta['option_id'] = $option;
+						$sta['goods_title'] .= '('.$info['options'][$option]['name'].')';
+						$sta['goods_unit_price'] = $info['options'][$option]['price'];
+						$sta['goods_price'] = $info['options'][$option]['price'] * $num;
+						$sta['goods_original_price'] = $sta['goods_price'];
+					}
+				}
+				pdo_insert('rhinfo_service_order_stat',$sta);
+			}
 			/*--*/
 			//删除购物车
 			pdo_delete('rhinfo_service_order_cart',['id'=>$cart['id'],'uid'=>$this->uid]);

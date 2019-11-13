@@ -20,18 +20,24 @@
 		**Date:2019/10/22
 		**Time:11:44
 		*/
-		public function getorder($uid){
+		public function getorder($uid,$type = 0,$page=1){
+			$page = $page <1?1:$page;
 			$order_status = order_status();
+			$where = ['o.uid'=>$uid,'o.uniacid'=>$this->uniacid];
+			if(!empty($type)) $where = array_merge($where,['o.status'=>$type]);
 			$orders = $this->query->from($this->tableName,'o')->leftjoin('rhinfo_service_store','s')
 						->on(['o.sid'=>'s.id'])
 						->select(['o.*','s.title','s.logo','s.delivery_mode'])
-						->where(['o.uid'=>$uid,'o.uniacid'=>$this->uniacid,'o.status'=>1])
+						->where($where)
+						->orderby(['status'=>'desc','addtime'=>'desc'])
+						->page($page,10)
 						->getall();
 			if(!empty($orders)){
 				foreach($orders as $k=>$order){
 					$order['data'] = iunserializer($order['data']);
 					$status_index = $order['status'];
 					$order['status_cn'] = $order_status[$status_index]['text'];
+					$order['goods'] = $this->query->from('ims_rhinfo_service_order_stat')->where(['uniacid'=>$this->uniacid,'oid'=>$order['id']])->getall();
 					$orders[$k] = $order;
 				}
 			}

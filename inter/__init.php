@@ -11,11 +11,14 @@
 	*/
 
 	// header('content-type:application/json;charset=utf-8');
-	header('Access-Control-Allow-Origin: *');
-
+	header('Access-Control-Allow-Origin:*');
+	header('Access-Control-Request-Method:*');
+	header('Access-Control-Request-Headers:*');
+	header('Access-Control-Allow-Credentials:false');
+	header('Access-Control-Allow-Headers:content-type,token');
 	defined('IN_IA') or exit('Access Denied');
 
-	global $_W,$_GPC;	
+	global $_W,$_GPC;
 
 	mload()->func('api');
 

@@ -99,7 +99,7 @@
 					$record['addtime'] = date('Y-m-d H:i',$record['addtime']);
 				}
 			}
-			jsonReturn(0,'',['records'=>$records]);
+			jsonReturn(0,'',['records'=>$records,'type'=>$deliveryer_account_status]);
 		}
 		//技师工作状态
 		public function work(){
@@ -184,17 +184,20 @@
 		//账户明细详情
 		public function accountinfo(){
 			$id = getvar('id');
-			$info_field = ['id','trade_type','fee','amount','addtime','remark'];
+			$info_field = ['id','trade_type','fee','amount','addtime','remark','extra'];
 			$info = pdo_get('rhinfo_service_deliveryer_current_log',['uniacid'=>$this->uniacid,'id'=>$id,'deliveryer_id'=>$this->uid],$info_field);
 			$output['info'] = $info;
 			if(!empty($info)){
 				$info['addtime'] = date('Y-m-d H:i',$info['addtime']);
 				if($info['trade_type'] == 2){
 					$cash_field = ['trade_no','get_fee','take_fee','final_fee','status','addtime','endtime','account'];
-					$cash_log = pdo_get('rhinfo_service_deliveryer_getcash_log',['uniacid'=>$this->uniacid,'id'=>$info['extra']]);
-					$cash_log['account'] = iunserializer($cash_log['account']);
-					$cash_log['addtime'] = date('Y-m-d H:i',$cash_log['addtime']);
-					$cash_log['endtime'] = empty($cash_log['endtime'])?0:date('Y-m-d H:i',$cash_log['endtime']);
+					$cash_log = pdo_get('rhinfo_service_deliveryer_getcash_log',['uniacid'=>$this->uniacid,'deliveryer_id'=>$this->uid,'id'=>$info['extra']]);
+					if(!empty($cash_log)){
+						$cash_log['account'] = iunserializer($cash_log['account']);
+						$cash_log['addtime'] = date('Y-m-d H:i',$cash_log['addtime']);
+						$cash_log['endtime'] = empty($cash_log['endtime'])?0:date('Y-m-d H:i',$cash_log['endtime']);
+					}
+					
 					$output['cash'] = $cash_log;
 				}
 			}

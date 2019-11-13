@@ -35,7 +35,7 @@
 		**store.mod.php line 386
 		*/
 		public function changeStoreAccount($money,$sid,$extra,$trade_type = 1,$type="inc",$remark=""){
-			$store = $this->getStoreByKey($sid);
+			$store = $this->getStoreAccountByKey($sid);
 			if(empty($store)) return false;
 			$op = $type =='inc'?'+':'-';
 			$sql = "update ".tablename('rhinfo_service_store_account')." set amount = amount ".$op.$money." where uniacid = ".$this->uniacid." and sid = ".$sid;
