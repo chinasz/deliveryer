@@ -141,7 +141,7 @@
 		public function editAddress(){
 			$aid = getvar('id');
 			$m_Address = new \model\Address($this->uniacid);
-			$address = pdo_get('rhinfo_service_address',['id'=>$aid,'uid'=>$this->uid],['name','mobile','location_x','location_y','address']);
+			$address = pdo_get('rhinfo_service_address',['id'=>$aid,'uid'=>$this->uid],['realname','mobile','location_x','location_y','address']);
 			$op = getvar('edit');
 			if(empty($op)){
 				$data = [

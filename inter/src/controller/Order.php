@@ -205,7 +205,7 @@
 				$info = $m_Goods->goodDetail($id,['g.*','c.id as cid','c.title as cname'],['s.id'=>$sid]);
 				if(empty($info)) continue;
 				$sta = [
-					'oid'	=>	0,
+					'oid'	=>	$order_id,
 					'uniacid'=>$this->uniacid,
 					'sid'	=>	$sid,
 					'uid'	=>	$this->uid,

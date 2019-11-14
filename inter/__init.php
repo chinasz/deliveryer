@@ -13,9 +13,10 @@
 	// header('content-type:application/json;charset=utf-8');
 	header('Access-Control-Allow-Origin:*');
 	header('Access-Control-Request-Method:*');
-	header('Access-Control-Request-Headers:*');
+	header('Access-Control-Expose-Headers:content-type');
+	header('Access-Control-Request-Headers:Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie, token');
 	header('Access-Control-Allow-Credentials:false');
-	header('Access-Control-Allow-Headers:content-type,token');
+	header('Access-Control-Allow-Headers:*');
 	defined('IN_IA') or exit('Access Denied');
 
 	global $_W,$_GPC;

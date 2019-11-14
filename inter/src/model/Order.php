@@ -32,12 +32,13 @@
 						->orderby(['status'=>'desc','addtime'=>'desc'])
 						->page($page,10)
 						->getall();
+			
 			if(!empty($orders)){
 				foreach($orders as $k=>$order){
 					$order['data'] = iunserializer($order['data']);
 					$status_index = $order['status'];
 					$order['status_cn'] = $order_status[$status_index]['text'];
-					$order['goods'] = $this->query->from('ims_rhinfo_service_order_stat')->where(['uniacid'=>$this->uniacid,'oid'=>$order['id']])->getall();
+					$order['goods'] = $this->query->from('rhinfo_service_order_stat')->where(['uniacid'=>$this->uniacid,'oid'=>$order['id']])->getall();
 					$orders[$k] = $order;
 				}
 			}

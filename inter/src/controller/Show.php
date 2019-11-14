@@ -26,9 +26,8 @@
 		//商户分类
 
 		public function storecategory(){
-
 			//$store_label = store_fetchall_category();
-
+			
 			$m_Store = new \model\Store($this->uniacid);
 
 			$categorys = $m_Store->getAllCategory(['id','title','thumb']);

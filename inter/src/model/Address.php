@@ -44,7 +44,7 @@
 			$add = [
 				'uniacid' 	=>	$this->uniacid,
 				'uid'		=>	$uid,
-				'name'		=>	$data['name'],
+				'realname'	=>	$data['name'],
 				'mobile'	=>	$data['phone'],
 				'address'	=>	$data['address'],
 				'location_x'=>	$data['location_x'],
@@ -58,7 +58,7 @@
 			
 			if(!empty($data) && !empty($aid)){
 				$data = [
-					'name'		=>	$data['name'],
+					'realname'	=>	$data['name'],
 					'mobile'	=>	$data['phone'],
 					'address'	=>	$data['address'],
 					'location_x'=>	$data['location_x'],

@@ -18,12 +18,11 @@
 		public function getMemberUnclaimed($uid,$field=['c.*','s.*']){
 			$Coupons = $this->query->from($this->tableName,'c')
 									->leftjoin('rhinfo_service_store','s')
-									->on(['c.id'=>'s.id'])
+									->on(['c.sid'=>'s.id'])
 									->select($field)
 									->where(['c.type'=>'couponCollect','c.uniacid'=>$this->uniacid,'c.status'=>1])
 									->orderby('c.id','desc')
 									->getall();
-
 			if(!empty($Coupons)){
 				foreach ($Coupons as $k=>$coupon){
 					
@@ -59,7 +58,24 @@
 			}
 			return $Coupons;
 		}
-		
-		
-		
+		//用户优惠券
+		public function getMemberCoupon($uid){
+			$field = ['cr.granttime','cr.discount','cr.condition','cr.endtime','s.title as store_title','c.title'];
+			$coupons= $this->query->from('rhinfo_service_activity_coupon_record','cr')
+						->innerjoin($this->tableName,'c')
+						->on(['cr.couponid'=>'c.id'])
+						->innerjoin('rhinfo_service_store','s')
+						->on(['cr.sid'=>'s.id'])
+						->select($field)
+						->where(['cr.uniacid'=>$this->uniacid,'cr.uid'=>$uid,'cr.type'=>'couponCollect','cr.status'=>1])
+						->getall();
+			// return $this->query->getLastQuery();
+			if(!empty($coupons)){
+				$coupons = array_map(function($v){
+					$v['endtime'] = date('Y-m-d H:i',$v['endtime']);
+					return $v;
+				},$coupons);
+			}
+			return  $coupons;
+		}
 	}
