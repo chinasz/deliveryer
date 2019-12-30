@@ -9,14 +9,7 @@
 	**Time:17:00
 
 	*/
-
 	// header('content-type:application/json;charset=utf-8');
-	header('Access-Control-Allow-Origin:*');
-	header('Access-Control-Request-Method:*');
-	header('Access-Control-Expose-Headers:content-type');
-	header('Access-Control-Request-Headers:Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie, token');
-	header('Access-Control-Allow-Credentials:false');
-	header('Access-Control-Allow-Headers:*');
 	defined('IN_IA') or exit('Access Denied');
 
 	global $_W,$_GPC;
@@ -46,9 +39,17 @@
 	// if(!$api_check) jsonReturn(25,'签名错误');
 
 	//
-
+	// $sysset = pdo_getcolumn('rhinfo_service_config',['uniacid'=>$this->uniacid],'sysset');
+	
+	// if(!empty($sysset)){
+		// $sysset = iunserializer($sysset);
+		// $_W['sys'] =  $sysset;
+		// $_W['delivery']['sys'] = $sysset['delivery'];
+	// }else{
+		// $_W['delivery']['sys'] = '';
+	// }
 	$_W['inter_config'] = get_system_config();
-
+	$_W['rhinfo_service']['config'] = get_system_config();
 	$_W['agentid'] = 0;
 
 	//加载文件

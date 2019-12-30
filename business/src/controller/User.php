@@ -47,8 +47,7 @@
 			if($verifty){
 				cache_delete($token);
 			}
-			josnReturn(0,'退出成功');
+			jsonReturn(0,'退出成功');
 		}
-		
 		
 	}

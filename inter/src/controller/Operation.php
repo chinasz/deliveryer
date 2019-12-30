@@ -111,9 +111,9 @@
 
 			$res = $m_Store->favoriteStore($this->uid,$sid);
 			if(empty($res)){
-				jsonReturn(1,'收藏失败');
+				jsonReturn(1,'操作失败');
 			}
-			jsonReturn(0,'收藏成功');
+			jsonReturn(0,'操作成功');
 
 		}
 		//新增收货地址
@@ -204,6 +204,16 @@
 			$m_Member = new \model\Member($this->uniacid);
 			$m_Member->editMember($this->uid,$data);
 			jsonReturn(0,'修改成功');
+		}
+		//设置默认地址
+		public function setdefaultadd(){
+			$aid = getvar('aid');
+			$m_Address = new \model\Address($this->uniacid);
+			$res = $m_Address->setDefaultAddress($this->uid,$aid);
+			if($res){
+				jsonReturn(0,'操作成功');
+			}
+			jsonReturn(1,'操作失败');
 		}
 		
 	}

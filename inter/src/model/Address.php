@@ -131,5 +131,15 @@
 			
 			return $flag;
 		}
-		
+		/*设置默认地址
+		**@param $uid 用户id $aid 地址id
+		*/
+		public function setDefaultAddress($uid,$aid){
+			$address = $this->query->where(['uid'=>$uid,'id'=>$aid])->get();
+			if($address){
+				pdo_update($this->tableName,['is_default'=>0],['is_default'=>1,'uid'=>$uid,'uniacid'=>$this->uniacid]);
+				return pdo_update($this->tableName,['is_default'=>1],['id'=>$aid]);
+			}
+			return false;
+		}
 	}

@@ -40,7 +40,7 @@
 			'phone.mobile'	 =>	'手机号格式错误',
 
 			'pass.required'	 =>	'请输入密码',
-
+			'code.required'	 =>	'请输入短信验证码',	
 			'name.required'	 =>	'联系人为必填',
 			'name.min'		 =>	'联系人2~15个字',
 			'name.max'		 =>	'联系人2~15个字',

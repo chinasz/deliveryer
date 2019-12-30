@@ -170,14 +170,28 @@
 				foreach ($goods as $good) {
 					$sids[] = $good['sid'];
 					$good['discount_price'] = $good['price'];
+					$good['thumb'] = tomedia($good['thumb']);
 					$store_goods[$good['sid']][] = $good;
 				}
 				$sids_str = implode(',', $sids);
 				$stores = pdo_fetchall('select id,title,logo,content,business_hours,delivery_fee_mode,sailed,score,delivery_price,delivery_areas,send_price,delivery_time,delivery_mode,forward_mode,forward_url from ' . tablename('rhinfo_service_store') . ' where uniacid = :uniacid and agentid = :agentid and status = 1 and id in (' . $sids_str . ')', array(':uniacid' => $_W['uniacid'], ':agentid' => $_W['agentid']), 'id');
+				//
+				if(!empty($stores)){
+					$stores = array_map(function($v){
+						$v['logo'] = tomedia($v['logo']);
+						return $v;
+					},$stores);
+				}
 			}
-			// var_dump($goods);die;
 
 			$search_stores = pdo_fetchall('select id,title,logo,content,business_hours,delivery_fee_mode,sailed,score,delivery_price,delivery_areas,send_price,delivery_time,delivery_mode,forward_mode,forward_url from ' . tablename('rhinfo_service_store') . ' where uniacid = :uniacid and agentid = :agentid and status = 1 and id not in (' . $sids_str . ') and title like :key', array(':uniacid' => $_W['uniacid'], ':agentid' => $_W['agentid'], ':key' => '%' . $keyword . '%'));
+			//
+			if(!empty($search_stores)){
+				$search_stores = array_map(function($v){
+					$v['logo'] = tomedia($v['logo']);
+					return $v;
+				},$search_stores);
+			}
 			$stores = array_merge($search_stores, $stores);
 			foreach ($stores as &$row) {
 				$row['goods'] = $store_goods[$row['id']];
@@ -203,7 +217,7 @@
 					}
 				}
 			}
-			jsonReturn(0,'',$store_goods);
+			jsonReturn(0,'',$stores);
 
 		}
 		//商品详情
@@ -211,7 +225,7 @@
 			$goods_id = getvar('id');
 			$field = ['g.id','g.title','g.price','g.is_options','g.unitname','g.label','g.thumb','g.slides','g.description','g.commitment','g.content','g.old_price','g.sailed','g.min_buy_limit','g.total','g.comment_good','g.comment_total','c.title as ctitle'];
 			$m_Goods = new \model\Goods($this->uniacid);
-			$goods = $m_Goods->goodDetail($goods_id);
+			$goods = $m_Goods->goodDetail($goods_id,$field);
 			
 			if(empty($goods)){
 				jsonReturn(1,'商品已下架或被删除');

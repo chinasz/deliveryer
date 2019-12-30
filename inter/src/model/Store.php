@@ -46,7 +46,7 @@
 						
 					}
 					$category['stores'] = $tem->getall();
-
+					
 					if(!empty($category['stores'])){
 						$category['stores'] = array_map(function($v){
 							$v['logo'] = tomedia($v['logo']);
@@ -55,6 +55,10 @@
 						},$category['stores']);
 					}
 					$categorys[$k] = $category;
+					
+					//分类店铺为空不显示
+					if(empty($category['stores'])) unset($categorys[$k]);
+					/**/
 				}
 				
 			}
@@ -211,10 +215,12 @@
 			// return $this->query->getLastQuery();
 			return $store;
 		}
-		//收藏店铺
+		//收藏店铺||取消收藏
 		public function favoriteStore($uid,$sid){
 			$is_favorite = $this->isFavorite($uid,$sid);
-			if($is_favorite) return true;
+			if($is_favorite) {
+				return pdo_delete('rhinfo_service_store_favorite',['uniacid'=>$this->uniacid,'uid'=>$uid,'sid'=>$sid]);
+			}
 			$data = [
 				'uniacid' =>	$this->uniacid,
 				'uid'	  =>	$uid,
@@ -303,10 +309,16 @@
 		public function storeByCategory($cid,$page=0,$field=['*']){
 			$limit = 10;
 			$start = $page>0?($page-1)*$limit:0;
-			return $this->query->from($this->tableName)
+			$stores = $this->query->from($this->tableName)
 						->where(['cid like'=>'%|'.$cid.'|%','status'=>1,'uniacid'=>$this->uniacid])
 						->limit($start,$limit)
 						->orderby('displayorder','desc')
 						->getall();	
+			if(!empty($stores)){
+				foreach($stores as &$store){
+					$store['logo'] = tomedia($store['logo']);	
+				}
+			}
+			return  $stores;
 		}
 	}

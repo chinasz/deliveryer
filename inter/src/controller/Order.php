@@ -182,7 +182,7 @@
 				'status'	=>	1,
 				'type'		=>	'place_order',
 				'role'		=>	'consumer',//!empty($role) ? $role : $_W['role']; 未知
-				'role'		=>	'下单顾主',//!empty($role_cn) ? $role_cn : $_W['role_cn']; 未知
+				'role_cn'	=>	'下单顾主',//!empty($role_cn) ? $role_cn : $_W['role_cn']; 未知
 				'title'		=>	'订单提交成功',
 				'note'		=>	"单号:{$order['ordersn']},请耐心等待商家确认",
 				'addtime'	=>	TIMESTAMP,
@@ -377,15 +377,19 @@
 		}
 		//订单评价
 		public function evaluate(){
+			global $_W,$_GPC;
 			$oid = getvar('id');
 			$goods_score = getvar('goods_score');
 			$delivery_score = getvar('delivery_score');
 			$text = getvar('text');
-			$thumb = getvar('thumb');
+			$goods = getvar('goods');	
+
 			$m_Order = new \model\Order($this->uniacid);
 			$order = $m_Order->getOrderByKey($oid,$this->uid);
 			if(empty($order)) jsonReturn(1,'订单不存在或已删除');
 			if($order['is_comment'] == 1) jsonReturn(1,'订单已评价');
+			if(empty($goods_score) || empty($delivery_score) || empty($text)) jsonReturn(1,'参数错误');
+			
 			$store = pdo_get('rhinfo_service_store',['id'=>$order['sid']]);
 			$insert = [
 				'uniacid'	=>	$this->uniacid,
@@ -395,27 +399,94 @@
 				'mobile'	=>	$order['mobile'],
 				'oid'		=>	$order['id'],
 				'sid'		=>	$order['sid'],
-				'delivery_id'=>	$order['delivery_id'],
-				'goods_quality'=>intval($goods_score),
-				'delivery_service'=>intval($delivery_score),
+				'deliveryer_id'=>	$order['deliveryer_id'],
+				'goods_quality'=>	intval($goods_score)>5?5:(intval($goods_score<=0?1:intval($goods_score))),
+				'delivery_service'=>	intval($delivery_score)>5?5:((intval($delivery_score)<=0?1:intval($delivery_score))),
 				'note'		=>	trim($text),
 				'status'	=>	$store['comment_status'],
 				'data'		=>	'',
 				'addtime'	=>	TIMESTAMP
 			];
+			$thumb = $_FILES['thumb'];
 			if(empty($thumb)){
-				$insert['thumb'] = [];
+				$insert['thumbs'] = [];
 			}else{
-				// 预留
+				$image = supload($thumb);
+				if($image['success']){
+					$insert['thumbs'] = iserializer([$image['path']]);
+				}
+				
 			}
 			//商品评价
-			//预留
-			
+			$goods = json_decode(htmlspecialchars_decode($goods),true);
+			if(!empty($goods)){
+				foreach($goods as $good){
+					if(empty($good['id'])) continue;
+					
+					$update = "set comment_total = comment_total + 1";
+					
+					if($good['score'] == 1){
+						
+						$update .= " , comment_good = comment_good + 1";
+						$insert['data']['good'][] = $good['id'];
+					}else{
+						$insert['data']['bad'][] = $good['id'];
+					}
+					$sql = "update ".tablename('rhinfo_service_goods').$update." where id = :id";
+					pdo_query($sql,[':id' => $good['id']]);
+				}
+				
+			}
 			$insert['score'] = $insert['delivery_service'] + $insert['goods_quality'];
 			$insert['data']	= iserializer($insert['data']);
-			pdo_insert('rhinfo_service_order_comment',$insert);
+			
+			$res = pdo_insert('rhinfo_service_order_comment',$insert);
 			pdo_update('rhinfo_service_order',['is_comment'=>1],['id'=>$oid]);
 			
 			jsonReturn(0,'评价成功');
+		}
+		//订单详情
+		public function info(){
+			$oid = getvar('id');
+			$m_Order = new \model\Order($this->uniacid);
+			
+			$order = $m_Order->getOrderByKey($oid,$this->uid);
+			if(empty($order)) jsonReturn(1,'订单不存在或已删除');
+			
+			jsonReturn(0,'',$order);
+		}
+		//催单
+		public function remind(){
+			$oid = getvar('id');
+			$m_Order = new \model\Order($this->uniacid);
+			
+			$order = $m_Order->getOrderByKey($oid,$this->uid);
+			if(empty($order)) jsonReturn(1,'订单不存在或已删除');
+			$log = pdo_fetch('select * from ' . tablename('rhinfo_service_order_status_log') . ' where uniacid = :uniacid and oid = :oid and status = 8 order by id desc',  [':uniacid' => $this->uniacid, ':oid' => $order['id']]);
+			
+			$m_Store = new \model\Store($this->uniacid);
+			$store = $m_Store->storeInfo($sid);
+			$remind_time_limit = intval($store['remind_time_limit']) ? intval($store['remind_time_limit']) : 10;
+			if($log['addtime'] >= (time() - $remind_time_limit * 60)) {
+				jsonReturn(1, "距离上次催单不超过{$remind_time_limit}分钟,不能催单");
+			}
+			// order_insert_status_log($id, 'remind');
+			$status_log = [
+				'uniacid'	=>	$this->uniacid,
+				'oid'		=>	$order['id'],
+				'status'	=>	8,
+				'type'		=>	'remind',
+				'role'		=>	'consumer',
+				'role_cn'	=>	'下单顾主',
+				'title'		=>	'商家已收到催单',
+				'note'		=>	'商家会尽快回复您的催单请求',
+				'addtime' => TIMESTAMP,
+			];
+			pdo_insert('rhinfo_service_order_status_log', $status_log);
+			
+			pdo_update('rhinfo_service_order', array('is_remind' => '1'), ['uniacid' => $this->uniacid, 'id' => $order['id']]);
+			
+			jsonReturn(0,'催单成功');
+			
 		}
     }
